@@ -1,0 +1,462 @@
+{
+  "id": "ec0deeac-41ac-46ea-8006-2a0ff0e5ae35",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.active_providers": {
+      "name": "active_providers",
+      "schema": "",
+      "columns": {
+        "provider_id": {
+          "name": "provider_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "active_providers_provider_id_users_tg_id_fk": {
+          "name": "active_providers_provider_id_users_tg_id_fk",
+          "tableFrom": "active_providers",
+          "tableTo": "users",
+          "columnsFrom": [
+            "provider_id"
+          ],
+          "columnsTo": [
+            "tg_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.chats_history": {
+      "name": "chats_history",
+      "schema": "",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "provider_id": {
+          "name": "provider_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consumer_id": {
+          "name": "consumer_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "chats_history_provider_id_users_tg_id_fk": {
+          "name": "chats_history_provider_id_users_tg_id_fk",
+          "tableFrom": "chats_history",
+          "tableTo": "users",
+          "columnsFrom": [
+            "provider_id"
+          ],
+          "columnsTo": [
+            "tg_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "chats_history_consumer_id_users_tg_id_fk": {
+          "name": "chats_history_consumer_id_users_tg_id_fk",
+          "tableFrom": "chats_history",
+          "tableTo": "users",
+          "columnsFrom": [
+            "consumer_id"
+          ],
+          "columnsTo": [
+            "tg_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "chats_history_provider_id_consumer_id_pk": {
+          "name": "chats_history_provider_id_consumer_id_pk",
+          "columns": [
+            "provider_id",
+            "consumer_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.dashboard_accounts": {
+      "name": "dashboard_accounts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bot_user_id": {
+          "name": "bot_user_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "dashboard_account_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Provider'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "dashboard_accounts_bot_user_id_users_tg_id_fk": {
+          "name": "dashboard_accounts_bot_user_id_users_tg_id_fk",
+          "tableFrom": "dashboard_accounts",
+          "tableTo": "users",
+          "columnsFrom": [
+            "bot_user_id"
+          ],
+          "columnsTo": [
+            "tg_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.on_going_chats": {
+      "name": "on_going_chats",
+      "schema": "",
+      "columns": {
+        "provider_id": {
+          "name": "provider_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consumer_id": {
+          "name": "consumer_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consumer_nickname": {
+          "name": "consumer_nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_nickname": {
+          "name": "provider_nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "on_going_chats_provider_id_users_tg_id_fk": {
+          "name": "on_going_chats_provider_id_users_tg_id_fk",
+          "tableFrom": "on_going_chats",
+          "tableTo": "users",
+          "columnsFrom": [
+            "provider_id"
+          ],
+          "columnsTo": [
+            "tg_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "on_going_chats_consumer_id_users_tg_id_fk": {
+          "name": "on_going_chats_consumer_id_users_tg_id_fk",
+          "tableFrom": "on_going_chats",
+          "tableTo": "users",
+          "columnsFrom": [
+            "consumer_id"
+          ],
+          "columnsTo": [
+            "tg_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "on_going_chats_consumer_nickname_user_preferences_nickname_fk": {
+          "name": "on_going_chats_consumer_nickname_user_preferences_nickname_fk",
+          "tableFrom": "on_going_chats",
+          "tableTo": "user_preferences",
+          "columnsFrom": [
+            "consumer_nickname"
+          ],
+          "columnsTo": [
+            "nickname"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "on_going_chats_provider_nickname_user_preferences_nickname_fk": {
+          "name": "on_going_chats_provider_nickname_user_preferences_nickname_fk",
+          "tableFrom": "on_going_chats",
+          "tableTo": "user_preferences",
+          "columnsFrom": [
+            "provider_nickname"
+          ],
+          "columnsTo": [
+            "nickname"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "on_going_chats_provider_id_consumer_id_pk": {
+          "name": "on_going_chats_provider_id_consumer_id_pk",
+          "columns": [
+            "provider_id",
+            "consumer_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "on_going_chats_provider_id_unique": {
+          "name": "on_going_chats_provider_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "provider_id"
+          ]
+        },
+        "on_going_chats_consumer_id_unique": {
+          "name": "on_going_chats_consumer_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "consumer_id"
+          ]
+        }
+      }
+    },
+    "public.sessions": {
+      "name": "sessions",
+      "schema": "",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "session": {
+          "name": "session",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.user_preferences": {
+      "name": "user_preferences",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "will_to_provide": {
+          "name": "will_to_provide",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 3
+        },
+        "user_type": {
+          "name": "user_type",
+          "type": "user_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Consumer'"
+        },
+        "is_providing": {
+          "name": "is_providing",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_busy": {
+          "name": "is_busy",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_preferences_user_id_users_tg_id_fk": {
+          "name": "user_preferences_user_id_users_tg_id_fk",
+          "tableFrom": "user_preferences",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "tg_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_preferences_id_unique": {
+          "name": "user_preferences_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id"
+          ]
+        },
+        "user_preferences_nickname_unique": {
+          "name": "user_preferences_nickname_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "nickname"
+          ]
+        }
+      }
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "tg_id": {
+          "name": "tg_id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "lastName": {
+          "name": "lastName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_tg_id_unique": {
+          "name": "users_tg_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tg_id"
+          ]
+        }
+      }
+    }
+  },
+  "enums": {
+    "public.dashboard_account_role": {
+      "name": "dashboard_account_role",
+      "schema": "public",
+      "values": [
+        "Admin",
+        "Provider"
+      ]
+    },
+    "public.user_type": {
+      "name": "user_type",
+      "schema": "public",
+      "values": [
+        "Consumer",
+        "Provider",
+        "Specialist"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

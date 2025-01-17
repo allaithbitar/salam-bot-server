@@ -1,0 +1,33 @@
+{
+  "name": "salam-bot-server",
+  "scripts": {
+    "dev": "bun  --watch src/index.ts",
+    "start": "bun ./dist/index.js",
+    "build": "bun build ./src/index.js --outdir ./dist --target bun",
+    "lint": "bun eslint \"src/**/*.ts\"",
+    "lint:fix": "bun eslint \"src/**/*.ts\" --fix",
+    "generate": "bun drizzle-kit generate",
+    "migration:push": "bun drizzle-kit push",
+    "migrate": "bun migration:generate && bun migration:push"
+  },
+  "dependencies": {
+    "@bogeychan/elysia-logger": "^0.1.1",
+    "@elysiajs/bearer": "^1.1.1",
+    "@elysiajs/cors": "^1.1.0",
+    "@elysiajs/jwt": "^1.1.0",
+    "crypto-js": "^4.2.0",
+    "drizzle-orm": "^0.33.0",
+    "elysia": "^1.1.5",
+    "postgres": "^3.4.4"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^2.25.1",
+    "@types/bun": "^1.1.6",
+    "@types/crypto-js": "^4.2.2",
+    "drizzle-kit": "^0.24.0",
+    "eslint": "^9.9.0",
+    "eslint-plugin-drizzle": "^0.2.3",
+    "prettier": "^3.4.2",
+    "typescript": "^5.5.4"
+  }
+}
