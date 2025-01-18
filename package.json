@@ -8,7 +8,8 @@
     "lint:fix": "bun eslint \"src/**/*.ts\" --fix",
     "generate": "bun drizzle-kit generate",
     "migration:push": "bun drizzle-kit push",
-    "migrate": "bun migration:generate && bun migration:push"
+    "migrate": "bun migration:generate && bun migration:push",
+    "seed": "bun ./src/db/seed.ts"
   },
   "dependencies": {
     "@bogeychan/elysia-logger": "^0.1.1",
