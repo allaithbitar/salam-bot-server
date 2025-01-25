@@ -1,16 +1,14 @@
 // import { pgTable } from "drizzle-orm/pg-core"
-import { int, unique } from 'drizzle-orm/mysql-core';
 import {
-  pgTable,
+  boolean,
   integer,
-  bigint,
-  text,
+  pgEnum,
+  pgTable,
+  primaryKey,
   serial,
   smallint,
-  pgEnum,
+  text,
   timestamp,
-  boolean,
-  primaryKey,
 } from 'drizzle-orm/pg-core';
 
 export const userType = pgEnum('user_type', [
@@ -25,7 +23,7 @@ export const dashboardAccountRole = pgEnum('dashboard_account_role', [
 ]);
 
 export const users = pgTable('users', {
-  tg_id: bigint('tg_id', { mode: 'number' }).unique().primaryKey(),
+  tg_id: text('tg_id').unique().primaryKey(),
   created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -41,7 +39,7 @@ export const userPreferences = pgTable('user_preferences', {
   user_type: userType('user_type').notNull().default('Consumer'),
   is_providing: boolean('is_providing').notNull().default(false),
   is_busy: boolean('is_busy').notNull().default(false),
-  user: bigint('user_id', { mode: 'number' })
+  user: text('user_id')
     .notNull()
     .references(() => users.tg_id, {
       onUpdate: 'cascade',
@@ -49,10 +47,20 @@ export const userPreferences = pgTable('user_preferences', {
     }),
 });
 
-export const sessions = pgTable('sessions', {
-  key: text('key'),
-  session: text('session'),
-});
+// export const botSessions = pgTable(
+//   'bot_sessions',
+//   {
+//     key: text('key'),
+//     session: text('session'),
+//   },
+//   (table) => ({
+//     pk: primaryKey({ columns: [table.key] }),
+//     pkWithCustomName: primaryKey({
+//       name: 'bot_sessions_pkey',
+//       columns: [table.key],
+//     }),
+//   }),
+// );
 
 export const dashboardAccounts = pgTable('dashboard_accounts', {
   id: serial('id').primaryKey(),
@@ -60,7 +68,7 @@ export const dashboardAccounts = pgTable('dashboard_accounts', {
     .notNull()
     .defaultNow(),
   password: text('password').notNull(),
-  bot_user_id: bigint('bot_user_id', { mode: 'number' })
+  bot_user_id: text('bot_user_id')
     .notNull()
     .references(() => users.tg_id, {
       onDelete: 'cascade',
@@ -72,14 +80,14 @@ export const dashboardAccounts = pgTable('dashboard_accounts', {
 export const onGoingChats = pgTable(
   'on_going_chats',
   {
-    provider_id: bigint('provider_id', { mode: 'number' })
+    provider_id: text('provider_id')
       .unique()
       .notNull()
       .references(() => users.tg_id, {
         onDelete: 'cascade',
         onUpdate: 'cascade',
       }),
-    consumer_id: bigint('consumer_id', { mode: 'number' })
+    consumer_id: text('consumer_id')
       .notNull()
       .unique()
       .references(() => users.tg_id, {
@@ -113,26 +121,44 @@ export const chatsHistory = pgTable(
     created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
       .notNull()
       .defaultNow(),
-    provider_id: bigint('provider_id', { mode: 'number' })
+    provider_id: text('provider_id')
       .notNull()
       .references(() => users.tg_id, {
         onDelete: 'cascade',
         onUpdate: 'cascade',
       }),
-    consumer_id: bigint('consumer_id', { mode: 'bigint' })
+    consumer_id: text('consumer_id')
       .notNull()
       .references(() => users.tg_id, {
         onDelete: 'cascade',
         onUpdate: 'cascade',
       }),
   },
-  (t) => ({
-    pk: primaryKey({ columns: [t.provider_id, t.consumer_id] }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.provider_id, table.consumer_id] }),
+    pkWithCustomName: primaryKey({
+      name: 'provider_id_consumer_id',
+      columns: [table.provider_id, table.consumer_id],
+    }),
   }),
 );
 
+export const ratings = pgTable('ratings', {
+  id: serial('id').unique().primaryKey(),
+  created_at: timestamp('created_at', { mode: 'string', withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  provider_id: text('provider_id')
+    .notNull()
+    .references(() => users.tg_id, {
+      onDelete: 'cascade',
+      onUpdate: 'cascade',
+    }),
+  rating: integer('rating').notNull(),
+});
+
 export const activeProviders = pgTable('active_providers', {
-  tg_id: bigint('provider_id', { mode: 'number' })
+  tg_id: text('provider_id')
     .notNull()
     .references(() => users.tg_id, {
       onDelete: 'cascade',

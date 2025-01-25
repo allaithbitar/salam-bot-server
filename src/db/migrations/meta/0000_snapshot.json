@@ -1,5 +1,5 @@
 {
-  "id": "ec0deeac-41ac-46ea-8006-2a0ff0e5ae35",
+  "id": "20deaf0e-9691-40e0-a0ee-9ae216be2e69",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -10,7 +10,7 @@
       "columns": {
         "provider_id": {
           "name": "provider_id",
-          "type": "bigint",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }
@@ -47,13 +47,13 @@
         },
         "provider_id": {
           "name": "provider_id",
-          "type": "bigint",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "consumer_id": {
           "name": "consumer_id",
-          "type": "bigint",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }
@@ -94,6 +94,13 @@
             "provider_id",
             "consumer_id"
           ]
+        },
+        "provider_id_consumer_id": {
+          "name": "provider_id_consumer_id",
+          "columns": [
+            "provider_id",
+            "consumer_id"
+          ]
         }
       },
       "uniqueConstraints": {}
@@ -123,7 +130,7 @@
         },
         "bot_user_id": {
           "name": "bot_user_id",
-          "type": "bigint",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -161,13 +168,13 @@
       "columns": {
         "provider_id": {
           "name": "provider_id",
-          "type": "bigint",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "consumer_id": {
           "name": "consumer_id",
-          "type": "bigint",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -272,27 +279,62 @@
         }
       }
     },
-    "public.sessions": {
-      "name": "sessions",
+    "public.ratings": {
+      "name": "ratings",
       "schema": "",
       "columns": {
-        "key": {
-          "name": "key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
         },
-        "session": {
-          "name": "session",
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "provider_id": {
+          "name": "provider_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
+        },
+        "rating": {
+          "name": "rating",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "ratings_provider_id_users_tg_id_fk": {
+          "name": "ratings_provider_id_users_tg_id_fk",
+          "tableFrom": "ratings",
+          "tableTo": "users",
+          "columnsFrom": [
+            "provider_id"
+          ],
+          "columnsTo": [
+            "tg_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {
+        "ratings_id_unique": {
+          "name": "ratings_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id"
+          ]
+        }
+      }
     },
     "public.user_preferences": {
       "name": "user_preferences",
@@ -341,7 +383,7 @@
         },
         "user_id": {
           "name": "user_id",
-          "type": "bigint",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }
@@ -386,7 +428,7 @@
       "columns": {
         "tg_id": {
           "name": "tg_id",
-          "type": "bigint",
+          "type": "text",
           "primaryKey": true,
           "notNull": true
         },

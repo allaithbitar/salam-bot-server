@@ -4,6 +4,7 @@ import { logger } from '@bogeychan/elysia-logger';
 import { cors } from '@elysiajs/cors';
 import type { InferSelectModel } from 'drizzle-orm';
 import {
+  AddRating,
   createChat,
   createDashboardAccount,
   dashboardLogin,
@@ -15,6 +16,7 @@ import {
   getConsumerConnectsList,
   getDashboardAccountByTgId,
   getIsUserRegistered,
+  getLastChatProviderId,
   getProviderByTgId,
   getUserPreferences,
   registerUser,
@@ -26,7 +28,12 @@ import {
   updateUserPreferences,
 } from './db/actions';
 import { decrypt, encrypt } from './helpers';
-import type { dashboardAccounts, userPreferences } from './db/schema';
+import {
+  ratings,
+  type dashboardAccounts,
+  type userPreferences,
+  type userType,
+} from './db/schema';
 
 const app = new Elysia()
   .use(logger())
@@ -40,12 +47,16 @@ const app = new Elysia()
     };
   })
 
-  .get('/ping', () => 'pong1')
+  .get('/ping', () => 'pong')
   .get(
     '/GetProviderByTgId',
-    async ({ query }: { query: { tg_id: string } }) => {
+    async ({
+      query,
+    }: {
+      query: { tg_id: string; user_type: (typeof userType.enumValues)[number] };
+    }) => {
       try {
-        const data = await getProviderByTgId(Number(query.tg_id));
+        const data = await getProviderByTgId(query.tg_id, query.user_type);
         return {
           data,
           error: null,
@@ -91,7 +102,7 @@ const app = new Elysia()
     '/GetUserPreferences',
     async ({ query, ...rest }: { query: { tg_id: string } }) => {
       try {
-        const data = await getUserPreferences(Number(query.tg_id));
+        const data = await getUserPreferences(query.tg_id);
 
         return {
           data,
@@ -112,7 +123,7 @@ const app = new Elysia()
     async ({
       body,
     }: {
-      body: { is_busy?: boolean; is_avaiable: boolean; tg_id: number };
+      body: { is_busy?: boolean; is_avaiable: boolean; tg_id: string };
     }) => {
       try {
         const data = await updateUserActiveState(body);
@@ -134,7 +145,7 @@ const app = new Elysia()
       body,
     }: {
       body: {
-        tg_id: number;
+        tg_id: string;
         preferences: Partial<InferSelectModel<typeof userPreferences>>;
       };
     }) => {
@@ -151,10 +162,10 @@ const app = new Elysia()
       body,
     }: {
       body: {
-        tg_id: number;
+        tg_id: string;
       };
     }) => {
-      const data = await createDashboardAccount(Number(body.tg_id));
+      const data = await createDashboardAccount(body.tg_id);
       return {
         data,
         error: null,
@@ -167,7 +178,7 @@ const app = new Elysia()
       body,
     }: {
       body: {
-        tg_id: number;
+        tg_id: string;
         properties: Partial<InferSelectModel<typeof dashboardAccounts>>;
       };
     }) => {
@@ -191,11 +202,11 @@ const app = new Elysia()
       query,
     }: {
       query: {
-        tg_id: number;
+        tg_id: string;
       };
     }) => {
       try {
-        const data = await deleteDashboardAccount(Number(query.tg_id));
+        const data = await deleteDashboardAccount(query.tg_id);
         return {
           data,
           error: null,
@@ -213,7 +224,7 @@ const app = new Elysia()
     '/RemoveAllRelatedOnGoingChats',
     async ({ query }: { query: { tg_id: string } }) => {
       try {
-        const data = await removeAllRelatedOnGoingChat(Number(query.tg_id));
+        const data = await removeAllRelatedOnGoingChat(query.tg_id);
         return {
           data,
           error: null,
@@ -232,6 +243,7 @@ const app = new Elysia()
       return {
         data: data.map((u) => ({
           ...u.users,
+          rating: u.rating,
           preferences: u.user_preferences,
         })),
         error: null,
@@ -245,7 +257,7 @@ const app = new Elysia()
   })
   .get('/GetBotUserByTgId', async ({ query }: { query: { tg_id: string } }) => {
     try {
-      const data = await getBotUserByTgId(Number(query.tg_id));
+      const data = await getBotUserByTgId(query.tg_id);
       if (!data.length) throw new Error('BOT_USER_NOT_FOUND');
       return {
         data: {
@@ -272,7 +284,7 @@ const app = new Elysia()
       body,
     }: {
       body: {
-        tg_id: number;
+        tg_id: string;
         username: string;
         first_name: string;
         last_name: string;
@@ -300,7 +312,7 @@ const app = new Elysia()
       body,
     }: {
       body: {
-        tg_id: number;
+        tg_id: string;
         username: string;
         first_name: string;
         last_name: string;
@@ -330,7 +342,7 @@ const app = new Elysia()
       };
     }) => {
       try {
-        const data = await getIsUserRegistered(Number(query.tg_id));
+        const data = await getIsUserRegistered(query.tg_id);
         return {
           data,
           error: null,
@@ -349,14 +361,14 @@ const app = new Elysia()
       body,
     }: {
       body: {
-        provider_id: number;
-        consumer_id: number;
+        provider_id: string;
+        consumer_id: string;
       };
     }) => {
       try {
         const data = await createChat({
-          provider_id: Number(body.provider_id),
-          consumer_id: Number(body.consumer_id),
+          provider_id: body.provider_id,
+          consumer_id: body.consumer_id,
         });
         return {
           data,
@@ -373,8 +385,8 @@ const app = new Elysia()
       body,
     }: {
       body: {
-        provider_id: number;
-        consumer_id: number;
+        provider_id: string;
+        consumer_id: string;
       };
     }) => {
       try {
@@ -404,7 +416,7 @@ const app = new Elysia()
       };
     }) => {
       try {
-        const data = await getConsumerConnectsList(Number(query.consumer_id));
+        const data = await getConsumerConnectsList(query.consumer_id);
         return {
           data,
           error: null,
@@ -418,9 +430,57 @@ const app = new Elysia()
     },
   )
   .get(
+    '/GetLastChatProviderId',
+    async ({
+      query,
+    }: {
+      query: {
+        consumer_id: string;
+      };
+    }) => {
+      try {
+        const data = await getLastChatProviderId(query.consumer_id);
+        return {
+          data,
+          error: null,
+        };
+      } catch (error: unknown) {
+        return {
+          data: null,
+          error,
+        };
+      }
+    },
+  )
+  .post(
+    '/AddRating',
+    async ({
+      body,
+    }: {
+      body: {
+        provider_id: string;
+        rating: number;
+      };
+    }) => {
+      try {
+        await AddRating(body.provider_id, body.rating);
+        return {
+          data: true,
+          error: null,
+        };
+      } catch (error: unknown) {
+        return {
+          data: null,
+          error,
+        };
+      }
+    },
+  )
+
+  .get(
     '/GenerateDashboardAuthToken',
     async ({ query }: { query: { tg_id: string } }) => {
-      const data = await getDashboardAccountByTgId(Number(query.tg_id));
+      const data = await getDashboardAccountByTgId(query.tg_id);
 
       const account = data[0];
 
@@ -432,7 +492,7 @@ const app = new Elysia()
 
       const token = encrypt(
         JSON.stringify({
-          tg_id: Number(query.tg_id),
+          tg_id: query.tg_id,
           dashboardUserId,
           role,
         }),
@@ -447,7 +507,7 @@ const app = new Elysia()
   .get(
     '/DashboardAccountByTgId',
     async ({ query }: { query: { tg_id: string } }) => {
-      const data = await getDashboardAccountByTgId(Number(query.tg_id));
+      const data = await getDashboardAccountByTgId(query.tg_id);
 
       if (!data[0]) {
         return {
@@ -460,7 +520,7 @@ const app = new Elysia()
 
       return {
         data: {
-          tg_id: Number(query.tg_id),
+          tg_id: query.tg_id,
           dashboardUserId,
           role,
         },
@@ -474,7 +534,7 @@ const app = new Elysia()
     async ({ query }: { query: { token: string } }) => {
       try {
         const dec = JSON.parse(decrypt(query.token) ?? '{}') as {
-          tg_id: number;
+          tg_id: string;
           dashboardUserId: number;
           role: string;
         };
@@ -483,7 +543,7 @@ const app = new Elysia()
           throw new Error('TOKEN_ISNT_VALID');
         }
 
-        const data = await getDashboardAccountByTgId(Number(dec.tg_id));
+        const data = await getDashboardAccountByTgId(dec.tg_id);
 
         const { id: dashboardUserId } = data[0];
 
@@ -492,7 +552,7 @@ const app = new Elysia()
         }
 
         return {
-          data: data[0],
+          data: { ...data[0], tg_id: dec.tg_id },
           error: null,
         };
       } catch (error: any) {

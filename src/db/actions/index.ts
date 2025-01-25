@@ -1,11 +1,13 @@
 import type { InferSelectModel } from 'drizzle-orm';
-import { and, eq, inArray, or, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, or } from 'drizzle-orm';
 import {
   chatsHistory,
   dashboardAccounts,
   onGoingChats,
+  ratings,
   userPreferences,
   users,
+  userType,
 } from '../schema';
 import { db } from '..';
 import {
@@ -19,7 +21,7 @@ export async function updateUserActiveState({
   is_busy,
   is_providing,
 }: {
-  tg_id: number;
+  tg_id: string;
   is_busy?: boolean;
   is_providing?: boolean;
 }) {
@@ -40,7 +42,7 @@ export async function updateUserPreferences({
   tg_id,
   preferences,
 }: {
-  tg_id: number;
+  tg_id: string;
   preferences: Partial<InferSelectModel<typeof userPreferences>>;
 }) {
   return db
@@ -49,7 +51,7 @@ export async function updateUserPreferences({
     .where(eq(userPreferences.user, tg_id));
 }
 
-export async function createDashboardAccount(tg_id: number) {
+export async function createDashboardAccount(tg_id: string) {
   const password = generateRandomPassword();
   const encryptedPassword = encrypt(password);
   return db.insert(dashboardAccounts).values({
@@ -62,7 +64,7 @@ export async function updateDashboardAccount({
   tg_id,
   properties,
 }: {
-  tg_id: number;
+  tg_id: string;
   properties: Partial<InferSelectModel<typeof dashboardAccounts>>;
 }) {
   if (properties.password) {
@@ -74,7 +76,7 @@ export async function updateDashboardAccount({
     .where(eq(dashboardAccounts.bot_user_id, tg_id));
 }
 
-export async function deleteDashboardAccount(tg_id: number) {
+export async function deleteDashboardAccount(tg_id: string) {
   return db
     .delete(dashboardAccounts)
     .where(eq(dashboardAccounts.bot_user_id, tg_id));
@@ -84,8 +86,8 @@ export async function createChat({
   provider_id,
   consumer_id,
 }: {
-  provider_id: number;
-  consumer_id: number;
+  provider_id: string;
+  consumer_id: string;
 }) {
   const provider = await db.query.userPreferences.findFirst({
     where: eq(userPreferences.user, provider_id),
@@ -106,7 +108,7 @@ export async function createChat({
   });
 }
 
-export async function getUserPreferences(tg_id: number) {
+export async function getUserPreferences(tg_id: string) {
   return db.query.userPreferences.findFirst({
     where: eq(userPreferences.user, tg_id),
   });
@@ -116,7 +118,7 @@ export function getAllOnGoingChats() {
   return db.query.onGoingChats.findMany();
 }
 
-export function removeAllRelatedOnGoingChat(tg_id: number) {
+export function removeAllRelatedOnGoingChat(tg_id: string) {
   return db
     .delete(onGoingChats)
     .where(
@@ -133,7 +135,7 @@ export async function registerUser({
   first_name,
   last_name,
 }: {
-  tg_id: number;
+  tg_id: string;
   username: string;
   first_name: string;
   last_name: string;
@@ -160,7 +162,7 @@ export async function syncUserNames({
   first_name,
   last_name,
 }: {
-  tg_id: number;
+  tg_id: string;
   username: string;
   first_name: string;
   last_name: string;
@@ -175,21 +177,31 @@ export async function syncUserNames({
     .where(eq(users.tg_id, tg_id));
 }
 
-export async function getIsUserRegistered(tg_id: number) {
+export async function getIsUserRegistered(tg_id: string) {
   return !!(await db.query.users.findFirst({ where: eq(users.tg_id, tg_id) }));
 }
 
 export async function updateConnectsHistory(
-  consumer_id: number,
-  provider_id: number,
+  consumer_id: string,
+  provider_id: string,
 ) {
-  return db.insert(chatsHistory).values({
-    provider_id,
-    consumer_id,
-  });
+  return db
+    .insert(chatsHistory)
+    .values({
+      provider_id,
+      consumer_id,
+    })
+    .onConflictDoUpdate({
+      target: [chatsHistory.provider_id, chatsHistory.consumer_id],
+      targetWhere: and(
+        eq(chatsHistory.consumer_id, consumer_id),
+        eq(chatsHistory.provider_id, provider_id),
+      ),
+      set: { created_at: new Date().toISOString() },
+    });
 }
 
-export async function getConsumerConnectsList(consumer_id: number) {
+export async function getConsumerConnectsList(consumer_id: string) {
   const chats = await db.query.chatsHistory.findMany({
     where: eq(chatsHistory.consumer_id, consumer_id),
   });
@@ -197,7 +209,8 @@ export async function getConsumerConnectsList(consumer_id: number) {
   return db
     .select({
       nickname: userPreferences.nickname,
-      user: userPreferences.user,
+      tg_id: userPreferences.user,
+      user_type: userPreferences.user_type,
     })
     .from(userPreferences)
     .where(
@@ -217,22 +230,43 @@ export async function getConsumerConnectsList(consumer_id: number) {
   //   );
 }
 
+export async function getLastChatProviderId(consumer_id: string) {
+  const chat = await db.query.chatsHistory.findFirst({
+    where: eq(chatsHistory.consumer_id, consumer_id),
+    orderBy: desc(chatsHistory.created_at),
+  });
+
+  return chat;
+}
+
+export async function AddRating(provider_id: string, rating: number) {
+  console.log({ provider_id, rating });
+
+  await db.insert(ratings).values({ rating, provider_id });
+}
+
 export function getAllActiveProviders() {
   return db.query.userPreferences.findMany({
     where: eq(userPreferences.is_providing, true),
   });
 }
 
-export function getProviderByTgId(tg_id: number) {
+export function getProviderByTgId(
+  tg_id: string,
+  user_Type?: (typeof userType.enumValues)[number],
+) {
   return db.query.userPreferences.findFirst({
     where: and(
       eq(userPreferences.user, tg_id),
-      inArray(userPreferences.user_type, ['Specialist', 'Provider']),
+      inArray(
+        userPreferences.user_type,
+        user_Type ? [user_Type] : ['Specialist', 'Provider'],
+      ),
     ),
   });
 }
 
-export function getDashboardAccountByTgId(tg_id: number) {
+export function getDashboardAccountByTgId(tg_id: string) {
   return db
     .select({
       id: dashboardAccounts.id,
@@ -242,14 +276,31 @@ export function getDashboardAccountByTgId(tg_id: number) {
     .where(eq(dashboardAccounts.bot_user_id, tg_id));
 }
 
-export function getAllBotUsers() {
-  return db
+export async function getAllBotUsers() {
+  const ratings = await db.query.ratings.findMany();
+  const usersData = await db
     .select()
     .from(users)
     .leftJoin(userPreferences, eq(userPreferences.user, users.tg_id));
+
+  return usersData.map((u) => {
+    const userRatings = ratings.filter((r) => r.provider_id === u.users.tg_id);
+    const sum = userRatings.reduce((acc, curr) => {
+      return (acc += curr.rating);
+    }, 0);
+    return {
+      ...u,
+      rating: {
+        value: sum / userRatings.length,
+        count: userRatings.length,
+      },
+    };
+  });
+
+  // .rightJoin(ratings, eq(ratings.provider_id, users.tg_id));
 }
 
-export function getBotUserByTgId(tg_id: number) {
+export function getBotUserByTgId(tg_id: string) {
   return db
     .select()
     .from(users)
