@@ -39,6 +39,7 @@ export const userPreferences = pgTable('user_preferences', {
   user_type: userType('user_type').notNull().default('Consumer'),
   is_providing: boolean('is_providing').notNull().default(false),
   is_busy: boolean('is_busy').notNull().default(false),
+  is_blocked: boolean('is_blocked').notNull().default(false),
   user: text('user_id')
     .notNull()
     .references(() => users.tg_id, {
