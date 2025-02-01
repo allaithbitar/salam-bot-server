@@ -239,6 +239,42 @@ export async function getLastChatProviderId(consumer_id: string) {
   return chat;
 }
 
+export async function getUserAccountInfo(provider_id: string) {
+  const providerRatings = await db.query.ratings.findMany({
+    where: eq(ratings.provider_id, provider_id),
+  });
+
+  const sum = providerRatings.reduce((acc, curr) => {
+    acc += curr.rating;
+    return acc;
+  }, 0);
+
+  const rating = (sum / providerRatings.length).toFixed(1);
+
+  const providerPreferences = await db.query.userPreferences.findFirst({
+    where: eq(userPreferences.user, provider_id),
+  });
+
+  const { will_to_provide, nickname } = providerPreferences || {};
+
+  const connectsList = await db.query.chatsHistory.findMany({
+    where: eq(chatsHistory.provider_id, provider_id),
+  });
+
+  const providerAccountData = await db.query.users.findFirst({
+    where: eq(users.tg_id, provider_id),
+  });
+
+  const { created_at } = providerAccountData || {};
+
+  return {
+    will_to_provide,
+    created_at,
+    connects_count: connectsList.length,
+    nickname,
+    rating,
+  };
+}
 export async function AddRating(provider_id: string, rating: number) {
   console.log({ provider_id, rating });
 

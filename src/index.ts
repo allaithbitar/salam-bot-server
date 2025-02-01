@@ -18,6 +18,7 @@ import {
   getIsUserRegistered,
   getLastChatProviderId,
   getProviderByTgId,
+  getUserAccountInfo,
   getUserPreferences,
   registerUser,
   removeAllRelatedOnGoingChat,
@@ -29,7 +30,6 @@ import {
 } from './db/actions';
 import { decrypt, encrypt } from './helpers';
 import {
-  ratings,
   type dashboardAccounts,
   type userPreferences,
   type userType,
@@ -452,6 +452,30 @@ const app = new Elysia()
       }
     },
   )
+  .get(
+    '/GetUserAccountInfo',
+    async ({
+      query,
+    }: {
+      query: {
+        tg_id: string;
+      };
+    }) => {
+      try {
+        const data = await getUserAccountInfo(query.tg_id);
+        return {
+          data,
+          error: null,
+        };
+      } catch (error: unknown) {
+        return {
+          data: null,
+          error,
+        };
+      }
+    },
+  )
+
   .post(
     '/AddRating',
     async ({
