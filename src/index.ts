@@ -1,6 +1,5 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { Elysia } from 'elysia';
-import { logger } from '@bogeychan/elysia-logger';
 import { cors } from '@elysiajs/cors';
 import type { InferSelectModel } from 'drizzle-orm';
 import {
@@ -36,7 +35,6 @@ import {
 } from './db/schema';
 
 const app = new Elysia()
-  .use(logger())
   .use(cors())
   .onError(({ error }: { error: any }) => {
     console.log(error);
